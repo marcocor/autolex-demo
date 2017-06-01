@@ -1,7 +1,16 @@
 body {
-  padding-top: 50px;
 }
 
 .main {
   padding: 30px 15px 10px 15px;
+}
+
+.row {
+    position: relative;
+}
+
+.position-bottom {
+    position: absolute;
+    bottom:0;
+    right:0;
 }

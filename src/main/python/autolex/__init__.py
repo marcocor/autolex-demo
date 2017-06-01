@@ -76,5 +76,10 @@ class Autolex(object):
         self.db.execute('INSERT INTO natural_expressions VALUES (?, ?)', (verdict_key, expression))
         self.db_connection.commit()
 
-    def get_verdicts_info(self):
+    def get_verdict_info(self, verdict_key):
+        return self.db.execute('''SELECT verdict_key, title, authority, verdict_id, date
+            FROM verdicts
+            WHERE verdict_key = ?''', (verdict_key,)).fetchone()
+
+    def get_all_verdicts(self):
         return self.db.execute('SELECT verdict_key, title, authority, verdict_id, date FROM verdicts').fetchall()

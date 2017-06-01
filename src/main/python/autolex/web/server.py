@@ -28,6 +28,10 @@ app = Flask(__name__,
 def index():
     return render_template('list_verdicts.html')
 
+@app.route('/edit_verdict')
+def edit_verdict():
+    return render_template('edit_verdict.html')
+
 
 @app.route('/add_verdict')
 def add_verdict():
@@ -67,10 +71,17 @@ def add_natural_expression():
     al.add_natural_expression(verdict_key, expression)
     return jsonify(result = "ok")
 
-@app.route('/get_verdicts_info')
-def get_verdicts_info():
+@app.route('/get_verdict_info')
+def get_verdict_info(verdict_key=None):
     global al
-    info = al.get_verdicts_info()
+    verdict_key = int(request.args.get('verdict_key'))
+    info = al.get_verdict_info(verdict_key)
+    return jsonify(result = "ok", verdict_info = info)
+
+@app.route('/get_all_verdicts')
+def get_all_verdicts():
+    global al
+    info = al.get_all_verdicts()
     return jsonify(result = "ok", verdict_info = info)
 
 
