@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block javascript %}
+<script>
+$(document).ready(function() {
+
+	$.getJSON("/get_verdicts_info").done(function(data) {
+		$.each(data["verdict_info"], function(i, v) {
+			$("#add-verdict-row")
+				.before($("<tr>")
+					.append($("<td>").text(v["title"]))
+					.append($("<td>").text(v["verdict_id"]))
+					.append($("<td>").text(v["authority"]))
+					.append($("<td>").text(v["date"]))
+					.append($("<td>")
+						.append($("<a>").attr("href", "edit_verdict/" + v["verdict_key"])
+							.append($("<button>").attr("type", "button").addClass("btn btn-default btn-sm")
+								.append($("<span>").addClass("glyphicon glyphicon-edit"))
+							)
+						)
+					)
+				)
+		})
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+})
+
+$("#add-verdict-button").click(function() {
+
+})
+
+</script>
+
+{% endblock %}
+
+{% block main %}
+<div class="row">
+	<div class="col-md-offset-1 col-md-10">
+		<h1 class="text-center">List of verdicts</h1>
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-offset-1 col-md-10">
+		<table class="table table-hover">
+			<thead><tr><th>Title</th><th>Verdict ID</th><th>Authority</th><th>Date</th><th></th></tr></thead>
+			<tbody>
+				<tr id="add-verdict-row">
+					<div class="form-group" id="add-verdict-form">
+						<td><input type="text" class="form-control" id="title" placeholder="Verdict title"></td>
+						<td><input type="text" class="form-control" id="verdict-id" placeholder="Verdict number"></td>
+						<td><input type="text" class="form-control" id="authorty" placeholder="Sentencing authority"></td>
+						<td><input type="text" class="form-control" id="date" placeholder="Sentencing date"></td>
+						<td><button type="submit" class="btn btn-default"><span class="glyphicon glyphicon-plus"></span></button></td>
+					</div>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</div>
+
+{% endblock %}
