@@ -37,7 +37,7 @@ $("#add-verdict-button").click(function() {
 		var verdict_key = data["verdict_key"]
 		window.location.href = "{{ url_for('edit_verdict') }}" + "?" + $.param({"verdict_key": verdict_key});
 	}).fail(function(data) {
-		alert("Query failed.")
+		alert("Query failed. Is the date format correct?")
 	})
 
 })
@@ -58,13 +58,11 @@ $("#add-verdict-button").click(function() {
 			<thead><tr><th>Title</th><th>Verdict ID</th><th>Authority</th><th>Date</th><th></th></tr></thead>
 			<tbody>
 				<tr id="add-verdict-row">
-					<div class="form-group" id="add-verdict-form">
-						<td><input type="text" class="form-control" id="add-verdict-title" placeholder="Verdict title"></td>
-						<td><input type="text" class="form-control" id="add-verdict-verdict-id" placeholder="Verdict number"></td>
-						<td><input type="text" class="form-control" id="add-verdict-authorty" placeholder="Sentencing authority"></td>
-						<td><input type="text" class="form-control" id="add-verdict-date" placeholder="Sentencing date"></td>
-						<td><button type="submit" class="btn btn-secondary btn-sm" id="add-verdict-button"><i class="fa fa-chevron-right"></i></button></td>
-					</div>
+					<td><input type="text" class="form-control" id="add-verdict-title" placeholder="Verdict title"></td>
+					<td><input type="text" class="form-control" id="add-verdict-verdict-id" placeholder="Verdict number"></td>
+					<td><input type="text" class="form-control" id="add-verdict-authorty" placeholder="Sentencing authority"></td>
+					<td><input type="text" class="form-control" id="add-verdict-date" placeholder="Date (YYYY-MM-DD)"></td>
+					<td><button type="submit" class="btn btn-secondary btn-sm" id="add-verdict-button"><i class="fa fa-chevron-right"></i></button></td>
 				</tr>
 			</tbody>
 		</table>
