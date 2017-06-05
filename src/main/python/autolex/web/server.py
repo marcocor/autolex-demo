@@ -17,6 +17,23 @@ import sys
 from autolex import Autolex
 
 
+class PrefixMiddleware(object):
+
+    def __init__(self, app, prefix=''):
+        self.app = app
+        self.prefix = prefix
+
+    def __call__(self, environ, start_response):
+
+        if environ['PATH_INFO'].startswith(self.prefix):
+            environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
+            environ['SCRIPT_NAME'] = self.prefix
+            return self.app(environ, start_response)
+        else:
+            start_response('404', [('Content-Type', 'text/plain')])
+            return ["This url does not belong to the app.".encode()]
+
+
 app = Flask(__name__,
             static_folder=os.path.join("..", "..", "..", "resources", "web", "static"),
             static_path="/static",
@@ -136,8 +153,12 @@ def delete_verdict():
 def main():
     global al
     parser = ArgumentParser()
-    parser.add_argument("-s", "--storage_db", required=True, action="store", help="Storage DB file")
+    parser.add_argument("-s", "--storage_db", required=True, help="Storage DB file")
+    parser.add_argument("-u", "--url_prefix", help="Application basic URL", default="/autolex-demo")
+    
     args = parser.parse_args()
+    
+    app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix=args.url_prefix)
 
     al = Autolex(args.storage_db)
     return app.run(host="0.0.0.0")
