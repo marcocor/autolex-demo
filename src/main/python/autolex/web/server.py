@@ -6,6 +6,7 @@ Created on May 26, 2017
 
 from argparse import ArgumentParser
 from collections import Counter
+from datetime import datetime
 from flask import Flask, jsonify, request, redirect, render_template
 import flask
 import logging
@@ -39,9 +40,21 @@ def add_verdict():
     title = request.args.get('title')
     authority = request.args.get('authority')
     verdict_id = request.args.get('verdict_id')
-    date = request.args.get('date')
+    date = datetime.strptime(request.args.get('date'), '%Y-%m-%d')
     verdict_key = al.add_verdict(title, authority, verdict_id, date)
     return jsonify(result = "ok", verdict_key=verdict_key)
+
+
+@app.route('/set_verdict_info')
+def set_verdict_info():
+    global al
+    verdict_key = request.args.get('verdict_key')
+    title = request.args.get('title')
+    authority = request.args.get('authority')
+    verdict_id = request.args.get('verdict_id')
+    date = datetime.strptime(request.args.get('date'), '%Y-%m-%d')
+    al.set_verdict_info(verdict_key, title, authority, verdict_id, date)
+    return jsonify(result = "ok")
 
 
 @app.route('/set_verdict_description')
@@ -72,7 +85,7 @@ def add_natural_expression():
     return jsonify(result = "ok")
 
 @app.route('/get_verdict_info')
-def get_verdict_info(verdict_key=None):
+def get_verdict_info():
     global al
     verdict_key = int(request.args.get('verdict_key'))
     info = al.get_verdict_info(verdict_key)
@@ -83,6 +96,21 @@ def get_all_verdicts():
     global al
     info = al.get_all_verdicts()
     return jsonify(result = "ok", verdict_info = info)
+
+
+@app.route('/get_actus_reus')
+def get_actus_reus():
+    global al
+    verdict_key = int(request.args.get('verdict_key'))
+    actus_reus = al.get_actus_reus(verdict_key)
+    return jsonify(result = "ok", actus_reus = actus_reus)
+
+@app.route('/delete_actus_reus')
+def delete_actus_reus():
+    global al
+    verdict_key = int(request.args.get('actus_reus_key'))
+    al.delete_actus_reus(verdict_key)
+    return jsonify(result = "ok")
 
 
 def main():

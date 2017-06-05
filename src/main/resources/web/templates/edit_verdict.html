@@ -2,6 +2,53 @@
 
 {% block javascript %}
 <script>
+
+var set_basic_button = function() {
+	if ($("#input-date-container").hasClass("has-danger")) {
+		$("#button-save-basic-info").addClass("disabled")
+	} else {
+		$("#button-save-basic-info").removeClass("disabled")
+		$("#button-save-basic-info").addClass("btn-warning")
+	}
+}
+
+var update_actus_reus_table = function() {
+	$(".actus-reus-row").remove();
+	$.getJSON("{{ url_for('get_actus_reus') }}", {"verdict_key": getUrlParameter("verdict_key")}).done(function(data) {
+		$.each(data["actus_reus"], function(i, a) {
+			$("#add-actus-reus-row").before($("<tr>").addClass("actus-reus-row")
+				.append($("<td>").text(a["description"]))
+				.append($("<td>").text(a["law"]))
+				.append($("<td>")
+					.append($("<button>").attr("type", "button").addClass("btn btn-secondary btn-sm")
+						.append($("<i>").addClass("fa fa-files-o"))
+						.click(function() {
+							$("#add-actus-reus-description").val(a["description"]);
+							$("#add-actus-reus-law").val(a["law"]);
+							$("#add-actus-reus-description-container").addClass("has-warning")
+							$("#add-actus-reus-law-container").addClass("has-warning")
+							set_add_actus_reus_button();
+							$("#add-actus-reus-description").focus();
+						})
+					)
+					.append($("<button>").attr("type", "button").addClass("btn btn-secondary btn-sm")
+						.append($("<i>").addClass("fa fa-trash-o"))
+						.click(function() {
+							$.getJSON("{{ url_for('delete_actus_reus') }}", {"actus_reus_key": a["actus_reus_key"]}).done(function(data) {
+								update_actus_reus_table();
+							}).fail(function(data) {
+								alert("Query failed.")
+							})
+						})
+					)
+				)
+			)
+		})
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+}
+
 $(document).ready(function() {
 
 	$.getJSON("{{ url_for('get_verdict_info') }}", {"verdict_key": getUrlParameter("verdict_key")}).done(function(data) {
@@ -10,14 +57,134 @@ $(document).ready(function() {
 		$("#input-verdict-id").val(data["verdict_info"]["verdict_id"])
 		$("#input-authority").val(data["verdict_info"]["authority"])
 		$("#input-date").val(data["verdict_info"]["date"])
+		$("#input-description").val(data["verdict_info"]["description"])
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+
+	update_actus_reus_table();
+})
+
+$("#button-save-basic-info").click(function() {
+	if ($(this).hasClass("disabled"))
+		return
+	var verdict_basic_data = {
+		"verdict_key":	getUrlParameter("verdict_key"),
+		"title":		$("#input-title").val(),
+		"verdict_id":	$("#input-verdict-id").val(),
+		"authority":	$("#input-authority").val(),
+		"date":			$("#input-date").val(),
+	}
+
+	$.getJSON("{{ url_for('set_verdict_info') }}", verdict_basic_data).done(function(data) {
+		$("#header-title").text($("#input-title").val())
+		$("#button-save-basic-info").addClass("disabled")
+		$("#input-date-container").removeClass("has-warning")
+		$("#input-title-container").removeClass("has-warning")
+		$("#input-verdict-id-container").removeClass("has-warning")
+		$("#input-authority-container").removeClass("has-warning")
+		$("#button-save-basic-info").removeClass("btn-warning")
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+	
+})
+
+$("#input-date").on('input propertychange', function() {
+	$("#input-date-container").addClass("has-warning")
+	
+	if (/^\d{4}-\d{2}-\d{2}$/.test($(this).val()))
+		$("#input-date-container").removeClass("has-danger")
+	else {
+		$("#input-date-container").addClass("has-danger")
+		set_basic_button()
+	}
+	
+	set_basic_button()
+})
+
+$("#input-title").on('input propertychange', function() {
+	$("#input-title-container").addClass("has-warning")
+	set_basic_button()
+})
+
+$("#input-verdict-id").on('input propertychange', function() {
+	$("#input-verdict-id-container").addClass("has-warning")
+	set_basic_button()
+})
+
+$("#input-authority").on('input propertychange', function() {
+	$("#input-authority-container").addClass("has-warning")
+	set_basic_button()
+})
+
+$("#button-save-description").click(function() {
+	if ($(this).hasClass("disabled"))
+		return
+	var verdict_desc_data = {
+		"verdict_key":	getUrlParameter("verdict_key"),
+		"description":	$("#input-description").val(),
+	}
+
+	$.getJSON("{{ url_for('set_verdict_description') }}", verdict_desc_data).done(function(data) {
+		$("#button-save-description").addClass("disabled")
+		$("#input-description-container").removeClass("has-warning")
+		$("#button-save-description").removeClass("btn-warning")
 	}).fail(function(data) {
 		alert("Query failed.")
 	})
 })
 
-$("#add-verdict-button").click(function() {
-
+$("#input-description").on('input propertychange', function() {
+	$("#input-description-container").addClass("has-warning")
+	$("#button-save-description").addClass("btn-warning")
+	$("#button-save-description").removeClass("disabled")
 })
+
+var set_add_actus_reus_button = function() {
+	$("#button-add-actus-reus").addClass("btn-warning")
+	if ($("#add-actus-reus-description").val() == "" ||
+		$("#add-actus-reus-law").val() == "") {
+		$("#button-add-actus-reus").addClass("disabled")
+	} else {
+		$("#button-add-actus-reus").removeClass("disabled")
+	}
+}
+
+$("#add-actus-reus-description").on('input propertychange change', function() {
+	$("#add-actus-reus-description-container").addClass("has-warning")
+	set_add_actus_reus_button();
+})
+
+$("#add-actus-reus-law").on('input propertychange', function() {
+	$("#add-actus-reus-law-container").addClass("has-warning")
+	set_add_actus_reus_button();
+})
+
+$("#button-add-actus-reus").click(function() {
+	if ($(this).hasClass("disabled"))
+		return
+
+	var actus_reus_data = {
+		"verdict_key":	getUrlParameter("verdict_key"),
+		"description":	$("#add-actus-reus-description").val(),
+		"law":	$("#add-actus-reus-law").val(),
+	}
+
+	$.getJSON("{{ url_for('add_actus_reus') }}", actus_reus_data).done(function(data) {
+		$("#button-add-actus-reus").addClass("disabled")
+		$("#add-actus-reus-description-container").removeClass("has-warning")
+		$("#add-actus-reus-law-container").removeClass("has-warning")
+		$("#button-add-actus-reus").removeClass("btn-warning")
+		update_actus_reus_table()
+		$("#add-actus-reus-description").val("")
+		$("#add-actus-reus-law").val("")
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+})
+
+
 
 </script>
 
@@ -30,32 +197,68 @@ $("#add-verdict-button").click(function() {
 	</div>
 </div>
 <div class="row">
-	<div class="col-md-12" id="edit-main">
+	<div class="col-md-12">
 		<h2>Basic info</h2>
 		<form>
 			<div class="form-group row">
-				<div class="col-md-4">
-					<label for="input-title">Title</label>
-					<input type="text" class="form-control" id="input-title">
+				<div class="form-group col-md-4" id="input-title-container">
+					<label class="form-control-label" for="input-title">Title</label>
+					<input type="text" class="form-control form-control-warning" id="input-title">
 				</div>
-				<div class="col-md-2">
-					<label for="input-verdict-id">Verdict ID</label>
-					<input type="text" class="form-control" id="input-verdict-id">
+				<div class="form-group col-md-2" id="input-verdict-id-container">
+					<label class="form-control-label" for="input-verdict-id">Verdict ID</label>
+					<input type="text" class="form-control form-control-warning" id="input-verdict-id">
 				</div>
-				<div class="col-md-3">
-					<label for="input-authority">Sentencing Authority</label>
-					<input type="text" class="form-control" id="input-authority">
+				<div class="form-group col-md-3" id="input-authority-container">
+					<label class="form-control-label" for="input-authority">Sentencing Authority</label>
+					<input type="text" class="form-control form-control-warning" id="input-authority">
 				</div>
-				<div class="col-md-2">
-					<label for="input-date">Date</label>
-					<input type="text" class="form-control" id="input-date">
+				<div class="form-group col-md-2" id="input-date-container">
+					<label class="form-control-label" for="input-date">Date</label>
+					<input type="text" class="form-control form-control-warning form-control-danger" placeholder="YYYY-MM-DD" id="input-date">
 				</div>
-				<div class="col-md-1">
-					<button type="button" class="btn btn-secondary position-bottom" id="save-basic-info"><i class="fa fa-check"></i></button>
+				<div class="form-group col-md-1">
+					<button type="button" class="btn btn-secondary position-bottom disabled" id="button-save-basic-info"><i class="fa fa-check"></i></button>
 				</div>
 			</div>
 		</form>
 
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-12">
+		<form>
+			<div class="form-group row">
+				<div class="form-group col-md-11" id="input-description-container">
+					<label class="form-control-label" for="input-description">Description</label>
+					<textarea rows="5" class="form-control form-control-warning" id="input-description"></textarea>
+				</div>
+				<div class="form-group col-md-1" id="input-description-container">
+					<button type="button" class="btn btn-secondary position-bottom disabled" id="button-save-description"><i class="fa fa-check"></i></button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-12">
+		<h2>Actus reus</h2>
+		<form>
+			<table class="table table-hover">
+				<thead><tr><th>Description</th><th>Law</th><th></th></tr></thead>
+				<tbody>
+					<tr id="add-actus-reus-row">
+						<td class="form-group" id="add-actus-reus-description-container">
+							<textarea rows="1" class="form-control form-control-warning" id="add-actus-reus-description" placeholder="Description of the actus reus"></textarea>
+						</td>
+						<td class="form-group" id="add-actus-reus-law-container">
+							<input type="text" class="form-control form-control-warning" id="add-actus-reus-law" placeholder="Broken law">
+						</td>
+						<td class="form-group"><button type="button" class="btn btn-secondary btn-sm disabled" id="button-add-actus-reus"><i class="fa fa-check"></i></button></td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
 	</div>
 </div>
 
