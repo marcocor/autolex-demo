@@ -75,15 +75,6 @@ def add_actus_reus():
     al.add_actus_reus(verdict_key, description, law)
     return jsonify(result = "ok")
 
-
-@app.route('/add_natural_expression')
-def add_natural_expression():
-    global al
-    verdict_key = int(request.args.get('verdict_key'))
-    expression = request.args.get('expression')
-    al.add_natural_expression(verdict_key, expression)
-    return jsonify(result = "ok")
-
 @app.route('/get_verdict_info')
 def get_verdict_info():
     global al
@@ -110,6 +101,35 @@ def delete_actus_reus():
     global al
     verdict_key = int(request.args.get('actus_reus_key'))
     al.delete_actus_reus(verdict_key)
+    return jsonify(result = "ok")
+
+@app.route('/add_natural_expression')
+def add_natural_expression():
+    global al
+    verdict_key = int(request.args.get('verdict_key'))
+    expression = request.args.get('expression')
+    al.add_natural_expression(verdict_key, expression)
+    return jsonify(result = "ok")
+
+@app.route('/get_natural_expressions')
+def get_natural_expressions():
+    global al
+    verdict_key = int(request.args.get('verdict_key'))
+    natural_expressions = al.get_natural_expressions(verdict_key)
+    return jsonify(result = "ok", natural_expressions = natural_expressions)
+
+@app.route('/delete_natural_expression')
+def delete_natural_expression():
+    global al
+    natural_expression_key = int(request.args.get('natural_expression_key'))
+    al.delete_natural_expression(natural_expression_key)
+    return jsonify(result = "ok")
+
+@app.route('/delete_verdict')
+def delete_verdict():
+    global al
+    verdict_key = int(request.args.get('verdict_key'))
+    al.delete_verdict(verdict_key)
     return jsonify(result = "ok")
 
 

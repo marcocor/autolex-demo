@@ -13,8 +13,8 @@ var set_basic_button = function() {
 }
 
 var update_actus_reus_table = function() {
-	$(".actus-reus-row").remove();
 	$.getJSON("{{ url_for('get_actus_reus') }}", {"verdict_key": getUrlParameter("verdict_key")}).done(function(data) {
+		$(".actus-reus-row").remove();
 		$.each(data["actus_reus"], function(i, a) {
 			$("#add-actus-reus-row").before($("<tr>").addClass("actus-reus-row")
 				.append($("<td>").text(a["description"]))
@@ -49,6 +49,40 @@ var update_actus_reus_table = function() {
 	})
 }
 
+var update_natural_expressions_table = function() {
+	$.getJSON("{{ url_for('get_natural_expressions') }}", {"verdict_key": getUrlParameter("verdict_key")}).done(function(data) {
+		$(".natural-expression-row").remove();
+		$.each(data["natural_expressions"], function(i, e) {
+			$("#add-natural-expression-row").before($("<tr>").addClass("natural-expression-row")
+				.append($("<td>").text(e["expression"]))
+				.append($("<td>")
+					.append($("<button>").attr("type", "button").addClass("btn btn-secondary btn-sm")
+						.append($("<i>").addClass("fa fa-files-o"))
+						.click(function() {
+							$("#add-natural-expression").val(e["expression"]);
+							$("#add-natural-expression-container").addClass("has-warning")
+							set_add_natural_expression_button();
+							$("#add-natural-expression-description").focus();
+						})
+					)
+					.append($("<button>").attr("type", "button").addClass("btn btn-secondary btn-sm")
+						.append($("<i>").addClass("fa fa-trash-o"))
+						.click(function() {
+							$.getJSON("{{ url_for('delete_natural_expression') }}", {"natural_expression_key": e["natural_expression_key"]}).done(function(data) {
+								update_natural_expressions_table();
+							}).fail(function(data) {
+								alert("Query failed.")
+							})
+						})
+					)
+				)
+			)
+		})
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+}
+
 $(document).ready(function() {
 
 	$.getJSON("{{ url_for('get_verdict_info') }}", {"verdict_key": getUrlParameter("verdict_key")}).done(function(data) {
@@ -63,6 +97,7 @@ $(document).ready(function() {
 	})
 
 	update_actus_reus_table();
+	update_natural_expressions_table();
 })
 
 $("#button-save-basic-info").click(function() {
@@ -184,6 +219,49 @@ $("#button-add-actus-reus").click(function() {
 	})
 })
 
+var set_add_natural_expression_button = function() {
+	$("#button-add-natural-expression").addClass("btn-warning")
+	if ($("#add-natural-expression").val() == "") {
+		$("#button-add-natural-expression").addClass("disabled")
+	} else {
+		$("#button-add-natural-expression").removeClass("disabled")
+	}
+}
+
+$("#add-natural-expression").on('input propertychange change', function() {
+	$("#add-natural-expression-container").addClass("has-warning")
+	set_add_natural_expression_button();
+})
+
+$("#button-add-natural-expression").click(function() {
+	if ($(this).hasClass("disabled"))
+		return
+
+	var data = {
+		"verdict_key":	getUrlParameter("verdict_key"),
+		"expression":	$("#add-natural-expression").val(),
+	}
+
+	$.getJSON("{{ url_for('add_natural_expression') }}", data).done(function(data) {
+		$("#button-add-natural-expression").addClass("disabled")
+		$("#add-natural-expression-container").removeClass("has-warning")
+		$("#button-add-natural-expression").removeClass("btn-warning")
+		update_natural_expressions_table()
+		$("#add-natural-expression").val("")
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+})
+
+$("#button-delete-verdict").click(function() {
+	if (confirm('Deletion of verdict ' + $("#header-title").val() + ' will be permanent. Do you confirm?')) {
+	$.getJSON("{{ url_for('delete_verdict') }}", {"verdict_key": getUrlParameter("verdict_key")}).done(function(data) {
+		window.location.href = "{{ url_for('index') }}";
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+	}
+})
 
 
 </script>
@@ -259,6 +337,33 @@ $("#button-add-actus-reus").click(function() {
 				</tbody>
 			</table>
 		</form>
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-12">
+		<h2>Natural Expressions</h2>
+		<form>
+			<table class="table table-hover">
+				<tbody>
+					<tr id="add-natural-expression-row">
+						<td class="form-group" id="add-natural-expression-container">
+							<textarea rows="1" class="form-control form-control-warning" id="add-natural-expression" placeholder="Natural Expression for search"></textarea>
+						</td>
+						<td class="form-group"><button type="button" class="btn btn-secondary btn-sm disabled" id="button-add-natural-expression"><i class="fa fa-check"></i></button></td>
+					</tr>
+				</tbody>
+			</table>
+		</form>
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-12">
+		<h2>More</h2>
+			<form>
+				<div class="form-group">
+					<button type="button" class="btn btn-secondary btn-sm" id="button-delete-verdict"><i class="fa fa-trash-o"></i> Delete verdict</button>
+				</div>
+			</form>
 	</div>
 </div>
 
