@@ -149,18 +149,39 @@ def delete_verdict():
     al.delete_verdict(verdict_key)
     return jsonify(result = "ok")
 
+@app.route('/search')
+def search():
+    global al
+    query = request.args.get('q')
+    es_hits = al.search(query)["hits"]["hits"]
+    results = []
+    for h in es_hits:
+        v_key = h["_source"]["verdict_key"]
+        score = h["_score"]
+        v_info = al.get_verdict_info(v_key)
+        results.append({
+            "verdict_key": v_key,
+            "score": v_key,
+            "authority": v_info["authority"],
+            "verdict_id": v_info["verdict_id"],
+            "date": v_info["date"],
+            })
+    return jsonify(result = "ok", results = results)
+
 
 def main():
     global al
     parser = ArgumentParser()
     parser.add_argument("-s", "--storage_db", required=True, help="Storage DB file")
     parser.add_argument("-u", "--url_prefix", help="Application basic URL", default="/autolex-demo")
+    parser.add_argument("-e", "--elasticsearch_index", help="Name of the ES index", default="autolex-demo")
+    parser.add_argument("-l", "--language", help="Data language", default="english")
     
     args = parser.parse_args()
     
     app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix=args.url_prefix)
 
-    al = Autolex(args.storage_db)
+    al = Autolex(args.storage_db, args.elasticsearch_index, args.language)
     return app.run(host="0.0.0.0")
     
 

@@ -13,7 +13,7 @@ import sqlite3
 from sqlitedict import SqliteDict
 import string
 import time
-
+import elasticsearch
 
 __all__ = []
 
@@ -27,7 +27,7 @@ def dict_factory(cursor, row):
 
 class Autolex(object):
 
-    def __init__(self, storage_db, erase=False):
+    def __init__(self, storage_db, elasticsearch_index, language, erase=False):
         if erase and os.path.isfile(storage_db):
             os.remove(storage_db)
         self.db_connection = sqlite3.connect(storage_db)
@@ -54,6 +54,60 @@ class Autolex(object):
             expression,
             FOREIGN KEY(verdict) REFERENCES verdicts(verdict_key))
             ''')
+
+        self.elasticsearch_index = elasticsearch_index
+        self.es = elasticsearch.Elasticsearch()
+        if self.es.indices.exists(index=self.elasticsearch_index):
+            self.es.indices.delete(index=self.elasticsearch_index)
+
+        self.es.indices.create(index=self.elasticsearch_index)
+        mapping = {
+            "properties": {
+                "expression": {
+                    "type": "text",
+                    "analyzer": language,
+                },
+                "verdict_key": {
+                    "type": "keyword",
+                }
+            }
+        }
+        self.es.indices.put_mapping(index=self.elasticsearch_index, doc_type='verdict', body=mapping)
+
+        self.add_missing_verdicts_es_index()
+
+
+    def refresh_verdict_es_index(self, verdict_key):
+        logging.info("Building index for verdict_key=%s", verdict_key)
+        body = {
+            "query": {
+                "match":{
+                    'verdict_key': verdict_key
+                }
+            }
+        }
+        self.es.delete_by_query(index=self.elasticsearch_index, doc_type='verdict', body=body)
+        
+        ne = [row["expression"] for row in self.get_natural_expressions(verdict_key)]
+        body = {
+            "verdict_key": verdict_key,
+            "expression": ne
+        }
+        self.es.index(index=self.elasticsearch_index, doc_type='verdict', body=body)
+
+    def search(self, question):
+        body = {
+            "query": {
+                "match": {
+                    "expression": question
+                    }
+                }
+            }
+        return self.es.search(index=self.elasticsearch_index, doc_type='verdict', body=body)
+
+    def add_missing_verdicts_es_index(self):
+        for row in self.db.execute('SELECT verdict_key FROM verdicts'):
+            self.refresh_verdict_es_index(row["verdict_key"])
 
     def add_verdict(self, title, authority, verdict_id, date):
         self.db.execute('''INSERT INTO verdicts(title, description, authority, verdict_id, date)
