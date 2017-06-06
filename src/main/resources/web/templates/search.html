@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block javascript %}
+<script>
+var issue_query = function(){
+	$("#results-list").empty()
+	
+	$.getJSON("{{ url_for('search') }}", {"q": $("#query-input").val()}).done(function(data) {
+		if (data["results"].length == 0) {
+			$("#results-list").text("No results found.");
+			return;
+		}
+		$.each(data["results"], function(i, v) {
+			actus_reus_list = $("<div>").addClass("list-group")
+			$.each(v["actus_reus"], function(i, a) {
+				actus_reus_list
+					.append($("<li>").addClass("list-group-item list-group-item-action")
+						.append($("<div>").addClass("row")
+							.append($("<div>").addClass("col-md-12")
+								.append($("<span>").addClass("actus-reus").text(a["description"]))
+							)
+						)
+						.append($("<div>").addClass("row w-100")
+							.append($("<div>").addClass("col-md-12")
+								.append($("<i>").addClass("fa fa-chevron-right mr-md-2"))
+								.append($("<span>").addClass("text-muted").text("Broken law: "))
+								.append($("<span>").addClass("law").text(a["law"])))
+							)
+						)
+			
+			})
+			
+			$("#results-list")
+				.append($("<li>").addClass("list-group-item")
+					.append($("<div>").addClass("card-block")
+						.append($("<h4>").addClass("card-title").text(v["title"]))
+						.append($("<h6>").addClass("card-subtitle mb-2")
+							.append($("<span>").addClass("text-muted").text("Verdict "))
+							.append($("<span>").addClass("verdict-id").text(v["verdict_id"]))
+							.append($("<span>").addClass("text-muted").text(" of "))
+							.append($("<span>").addClass("sentencing-date").text(v["date"]))
+							.append($("<span>").addClass("text-muted").text(" by "))
+							.append($("<span>").addClass("sentencing-authority").text(v["authority"]))
+						)
+						.append($("<p>").addClass("card-text text-muted").text("Potential unlawful acts:"))
+						.append(actus_reus_list)
+					)
+				)
+		})
+	}).fail(function(data) {
+		alert("Query failed.")
+	})
+}
+
+$(document).ready(function() {
+	query = getUrlParameter("q");
+	if (query != null) {
+		$("#query-input").val(query);
+		issue_query();
+	}
+})
+
+$('#search-button').click(issue_query);
+
+$('#query-input').keypress(function(event) {
+	if (event.which == 13) {
+		event.preventDefault();
+		issue_query();
+	}
+});
+</script>
+
+{% endblock %}
+
+{% block main %}
+<div class="row">
+	<div class="col-md-12">
+			<h1>Ask for legal advice.</h1>
+	</div>
+</div>
+<form class="form-search">
+	<div class="row">
+		<div class="form-group col-md-8">
+			<label for="query-input" class="sr-only">What is your concern?</label>
+			<input type="text" id="query-input" class="form-control"
+				placeholder="Type in the problem you experienced." autofocus />
+		</div>
+		<div class="col-md-4">
+			<button id="search-button" class="btn btn-lg btn-primary"
+				type="button">Search</button>
+		</div>
+	</div>
+</form>
+<div class="row">
+	<div class="col-md-12">
+		<ul class="list-group" id="results-list">
+		</ul>
+	</div>
+</div>
+
+{% endblock %}

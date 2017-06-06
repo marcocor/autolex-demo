@@ -135,18 +135,24 @@ class Autolex(object):
         self.db_connection.commit()
 
     def delete_actus_reus(self, actus_reus_key):
-        return self.db.execute('''DELETE
+        res = self.db.execute('''DELETE
             FROM actus_reus
             WHERE actus_reus_key = ?''', (actus_reus_key,)).fetchall()
+        self.db_connection.commit()
+        return res
 
     def add_natural_expression(self, verdict_key, expression):
         self.db.execute('INSERT INTO natural_expressions(verdict, expression) VALUES (?, ?)', (verdict_key, expression))
         self.db_connection.commit()
+        self.refresh_verdict_es_index(verdict_key)
 
-    def delete_natural_expression(self, natural_expression_key):
-        return self.db.execute('''DELETE
+    def delete_natural_expression(self, natural_expression_key, verdict_key):
+        res = self.db.execute('''DELETE
             FROM natural_expressions
-            WHERE natural_expression_key = ?''', (natural_expression_key,)).fetchall()
+            WHERE natural_expression_key = ? AND verdict = ?''', (natural_expression_key, verdict_key)).fetchall()
+        self.db_connection.commit()
+        self.refresh_verdict_es_index(verdict_key)
+        return res
 
     def get_verdict_info(self, verdict_key):
         return self.db.execute('''SELECT verdict_key, title, authority, verdict_id, date, description
