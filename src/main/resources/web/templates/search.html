@@ -11,7 +11,7 @@ var issue_query = function(){
 			return;
 		}
 		$.each(data["results"], function(i, v) {
-			actus_reus_list = $("<div>").addClass("list-group")
+			actus_reus_list = $("<ul>").addClass("list-group")
 			$.each(v["actus_reus"], function(i, a) {
 				actus_reus_list
 					.append($("<li>").addClass("list-group-item list-group-item-action")
@@ -20,7 +20,7 @@ var issue_query = function(){
 								.append($("<span>").addClass("actus-reus").text(a["description"]))
 							)
 						)
-						.append($("<div>").addClass("row w-100")
+						.append($("<div>").addClass("row")
 							.append($("<div>").addClass("col-md-12")
 								.append($("<i>").addClass("fa fa-chevron-right mr-md-2"))
 								.append($("<span>").addClass("text-muted").text("Broken law: "))
